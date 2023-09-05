@@ -4,44 +4,45 @@ on:
   release:
     types: [published]
 
-permissions: {}
+permissions: {} # No specific permissions configured
+
 jobs:
   open-pr:
     permissions:
-      contents: write # to create branch (peter-evans/create-pull-request)
-      pull-requests: write # to create a PR (peter-evans/create-pull-request)
+      contents: write # Permissions for creating branches
+      pull-requests: write # Permissions for creating a PR
 
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # Runs on an Ubuntu-based runner
+
     steps:
-      -
-        name: Checkout docs repo
+      - name: Checkout docs repo
         uses: actions/checkout@v3
         with:
           token: ${{ secrets.GHPAT_DOCS_DISPATCH }}
           repository: docker/docs
           ref: main
-      -
-        name: Prepare
+
+      - name: Prepare
         run: |
           rm -rf ./_data/compose-cli/*
-      -
-        name: Build
+
+      - name: Build
         uses: docker/build-push-action@v3
         with:
           context: ${{ github.server_url }}/${{ github.repository }}.git#${{ github.event.release.name }}
           target: docs-reference
           outputs: ./_data/compose-cli
-      -
-        name: Update compose_version in _config.yml
+
+      - name: Update compose_version in _config.yml
         run: |
           sed -i "s|^compose_version\:.*|compose_version\: \"${{ github.event.release.name }}\"|g" _config.yml
           cat _config.yml | yq .compose_version
-      -
-        name: Commit changes
+
+      - name: Commit changes
         run: |
           git add -A .
-      -
-        name: Create PR on docs repo
+
+      - name: Create PR on docs repo
         uses: peter-evans/create-pull-request@923ad837f191474af6b1721408744feb989a4c27 # v4.0.4
         with:
           token: ${{ secrets.GHPAT_DOCS_DISPATCH }}
